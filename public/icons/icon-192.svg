@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192" role="img" aria-label="SmartPark icon">
+  <rect width="192" height="192" rx="36" fill="#0E9F6E"/>
+  <rect x="34" y="32" width="124" height="128" rx="18" fill="#F4F8F9"/>
+  <path d="M70 134V58h34c18 0 31 12 31 29s-13 29-31 29H88v18H70Zm18-35h15c8 0 13-5 13-12s-5-12-13-12H88v24Z" fill="#17212B"/>
+  <path d="M50 148h92" stroke="#2563EB" stroke-width="10" stroke-linecap="round"/>
+</svg>

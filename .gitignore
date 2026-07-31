@@ -1,0 +1,14 @@
+.next
+.next-stale-*
+node_modules
+.pnpm-store/
+dist
+coverage
+playwright-report
+test-results
+.env
+.env*.local
+.vercel
+.corepack
+*.tsbuildinfo
+*.log
