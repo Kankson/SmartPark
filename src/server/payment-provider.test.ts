@@ -2,11 +2,12 @@ import { createHmac } from "node:crypto";
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { AzaPaymentProvider } from "@/server/payment-provider";
+import { AzaPaymentProvider, getAzaConfigurationStatus } from "@/server/payment-provider";
 
 describe("AZA payment provider", () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
   });
 
   it("creates a hosted checkout with server-side authentication and GHS decimal amounts", async () => {
@@ -103,5 +104,46 @@ describe("AZA payment provider", () => {
         }),
       ),
     ).rejects.toMatchObject({ code: "invalid_webhook_signature", status: 401 });
+  });
+
+  it("handles AZA's nested error envelope without leaking the API key", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            success: false,
+            error: { code: "INVALID_API_KEY", message: "Invalid API key" }
+          }),
+          { status: 401, headers: { "content-type": "application/json" } },
+        ),
+      ),
+    );
+    const provider = new AzaPaymentProvider({
+      apiKey: "aza_test_do-not-print-this",
+      webhookSecret: "webhook-secret"
+    });
+
+    await expect(provider.checkConnection()).rejects.toMatchObject({
+      code: "invalid_api_key",
+      message: "Invalid API key",
+      status: 401
+    });
+  });
+
+  it("reports redacted AZA readiness from server environment values", () => {
+    vi.stubEnv("PAYMENT_PROVIDER", "aza");
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://smartpark.example/");
+    vi.stubEnv("AZA_API_KEY", "aza_test_real-looking-key");
+    vi.stubEnv("AZA_WEBHOOK_SECRET", "configured-signing-secret");
+
+    expect(getAzaConfigurationStatus()).toEqual(expect.objectContaining({
+      provider: "aza",
+      apiKeyConfigured: true,
+      webhookSecretConfigured: true,
+      apiKeyMode: "test",
+      ready: true,
+      webhookUrl: "https://smartpark.example/api/payments/aza-webhook"
+    }));
   });
 });

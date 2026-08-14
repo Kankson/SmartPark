@@ -37,6 +37,18 @@ interface PaymentProvider {
 
 6. Restart SmartPark after changing the environment.
 
+The local file is created automatically by `pnpm dev`. Use these commands to open it and verify setup without printing
+secrets:
+
+```powershell
+corepack pnpm env:setup
+notepad .env.local
+corepack pnpm env:check
+```
+
+After restarting, Admin users can open **Settings** to copy the exact webhook URL and test `GET /api/v1/merchant/me`
+through SmartPark's server-side connection check.
+
 Use an `aza_test_...` key until the full workflow has been tested. Test keys use the production-shaped API without
 moving real money. Never expose either AZA secret through a `NEXT_PUBLIC_...` variable.
 
@@ -99,6 +111,7 @@ payments and processed delivery IDs must be stored in Supabase/PostgreSQL so eve
 - Process callbacks idempotently.
 - Store sanitized provider payloads only.
 - Never store card data.
+- Keep the AZA API key and signing secret in server environment variables, never in Git or client-side code.
 - Store payment and webhook idempotency records in a transactional database.
 - Do not debit the demonstration wallet for externally settled AZA payments.
 - Audit every financial state change.

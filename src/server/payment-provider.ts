@@ -120,9 +120,24 @@ interface AzaSuccessEnvelope<T> {
 
 interface AzaErrorEnvelope {
   success: false;
-  error?: string;
+  error?: string | {
+    code?: string;
+    message?: string;
+    field?: string;
+  };
   message?: string;
   statusCode?: number;
+}
+
+export interface AzaConfigurationStatus {
+  provider: PaymentProviderName;
+  apiBaseUrl: string;
+  appUrl: string;
+  webhookUrl: string;
+  apiKeyConfigured: boolean;
+  webhookSecretConfigured: boolean;
+  apiKeyMode: "test" | "live" | "unknown" | "missing";
+  ready: boolean;
 }
 
 export class AzaPaymentProvider implements PaymentProvider {
@@ -175,6 +190,10 @@ export class AzaPaymentProvider implements PaymentProvider {
       verifiedAt: nowIso(),
       payload: session as unknown as Record<string, unknown>
     };
+  }
+
+  async checkConnection(): Promise<void> {
+    await this.request<Record<string, unknown>>("/api/v1/merchant/me");
   }
 
   async verifyWebhook(rawBody: string, headers: Headers): Promise<VerifiedWebhookEvent> {
@@ -235,18 +254,24 @@ export class AzaPaymentProvider implements PaymentProvider {
           "x-api-key": this.options.apiKey,
           ...init.headers
         },
+        signal: init.signal ?? AbortSignal.timeout(10_000),
         cache: "no-store"
       });
-    } catch {
-      throw new DomainError("Could not connect to AZA. Please try again.", "payment_provider_unavailable", 502);
+    } catch (error) {
+      const timedOut = error instanceof Error && ["AbortError", "TimeoutError"].includes(error.name);
+      throw new DomainError(
+        timedOut ? "AZA took too long to respond. Please try again." : "Could not connect to AZA. Please try again.",
+        timedOut ? "payment_provider_timeout" : "payment_provider_unavailable",
+        502,
+      );
     }
 
     const payload = await readAzaResponse(response);
     if (!response.ok || payload.success !== true) {
       const error = payload as AzaErrorEnvelope;
       throw new DomainError(
-        error.message ?? "AZA rejected the payment request.",
-        error.error?.toLowerCase() ?? "payment_provider_error",
+        getAzaErrorMessage(error),
+        getAzaErrorCode(error),
         response.status,
       );
     }
@@ -284,6 +309,49 @@ export function createAzaPaymentProviderFromEnv() {
     webhookSecret,
     baseUrl: process.env.AZA_API_BASE_URL
   });
+}
+
+export function getAzaConfigurationStatus(): AzaConfigurationStatus {
+  const rawProvider = (process.env.PAYMENT_PROVIDER ?? "mock").trim().toLowerCase();
+  const provider: PaymentProviderName = rawProvider === "aza" ? "aza" : "mock";
+  const apiBaseUrl = (process.env.AZA_API_BASE_URL?.trim() || "https://api.aza.systems").replace(/\/$/, "");
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL?.trim() || "http://localhost:3000").replace(/\/$/, "");
+  const apiKey = process.env.AZA_API_KEY?.trim() ?? "";
+  const webhookSecret = process.env.AZA_WEBHOOK_SECRET?.trim() ?? "";
+  const apiKeyConfigured = isConfiguredValue(apiKey);
+  const webhookSecretConfigured = isConfiguredValue(webhookSecret);
+  const apiKeyMode = !apiKeyConfigured
+    ? "missing"
+    : apiKey.startsWith("aza_test_")
+      ? "test"
+      : apiKey.startsWith("aza_live_")
+        ? "live"
+        : "unknown";
+
+  return {
+    provider,
+    apiBaseUrl,
+    appUrl,
+    webhookUrl: `${appUrl}/api/payments/aza-webhook`,
+    apiKeyConfigured,
+    webhookSecretConfigured,
+    apiKeyMode,
+    ready: provider === "aza" && apiKeyConfigured && webhookSecretConfigured
+  };
+}
+
+export async function checkAzaConnectionFromEnv() {
+  const status = getAzaConfigurationStatus();
+  if (!status.ready) {
+    throw new DomainError(
+      "Complete the AZA server configuration before testing the connection.",
+      "missing_payment_configuration",
+      400,
+    );
+  }
+
+  await createAzaPaymentProviderFromEnv().checkConnection();
+  return status;
 }
 
 function minorToDecimal(amountMinor: number) {
@@ -327,6 +395,25 @@ async function readAzaResponse(response: Response): Promise<AzaSuccessEnvelope<u
   } catch {
     throw new DomainError("AZA returned an unreadable response.", "invalid_provider_response", 502);
   }
+}
+
+function getAzaErrorMessage(error: AzaErrorEnvelope) {
+  if (error.message) {
+    return error.message;
+  }
+  if (typeof error.error === "object" && error.error?.message) {
+    return error.error.message;
+  }
+  return "AZA rejected the payment request.";
+}
+
+function getAzaErrorCode(error: AzaErrorEnvelope) {
+  const code = typeof error.error === "string" ? error.error : error.error?.code;
+  return code?.trim().toLowerCase() || "payment_provider_error";
+}
+
+function isConfiguredValue(value: string) {
+  return Boolean(value) && !/(replace|your[-_]|example|change[-_]?me|\.\.\.)/i.test(value);
 }
 
 function parseJsonRecord(rawBody: string, message: string) {
