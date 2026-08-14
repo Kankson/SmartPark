@@ -321,20 +321,38 @@ export function createBookingReference() {
   return `SP-${stamp}-${suffix}`;
 }
 
-export function buildQrPayload(token: string) {
+export function buildQrPayload(token: string, appUrl?: string) {
+  if (appUrl) {
+    const url = new URL("/warden/scanner", appUrl);
+    url.searchParams.set("ticket", token);
+    return url.toString();
+  }
+
   return JSON.stringify({ type: "smartpark-ticket", token });
 }
 
 export function parseQrPayload(payload: string) {
+  const trimmed = payload.trim();
+
   try {
-    const parsed = JSON.parse(payload) as { type?: unknown; token?: unknown };
+    const parsed = JSON.parse(trimmed) as { type?: unknown; token?: unknown };
     if (parsed.type !== "smartpark-ticket" || typeof parsed.token !== "string") {
       throw new Error("Invalid QR payload");
     }
     return parsed.token;
   } catch {
-    if (payload.trim().length > 12) {
-      return payload.trim();
+    try {
+      const url = new URL(trimmed);
+      const ticket = url.searchParams.get("ticket");
+      if (ticket && ticket.length > 12) {
+        return ticket;
+      }
+    } catch {
+      // Legacy raw ticket tokens remain valid.
+    }
+
+    if (trimmed.length > 12 && !trimmed.includes("://")) {
+      return trimmed;
     }
     throw new DomainError("Invalid QR ticket payload", "invalid_qr_payload");
   }

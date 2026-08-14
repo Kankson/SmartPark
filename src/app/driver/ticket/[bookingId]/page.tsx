@@ -1,10 +1,11 @@
 import Link from "next/link";
+import { headers } from "next/headers";
 import { QRCodeSVG } from "qrcode.react";
 
 import { StatusPill } from "@/components/status-pill";
 import { Card } from "@/components/ui/card";
 import { requireRole } from "@/lib/auth";
-import { formatMoney } from "@/server/domain";
+import { buildQrPayload, formatMoney, parseQrPayload } from "@/server/domain";
 import { getBookingDetails } from "@/server/smartpark-service";
 
 export default async function TicketPage({ params }: { params: Promise<{ bookingId: string }> }) {
@@ -16,20 +17,32 @@ export default async function TicketPage({ params }: { params: Promise<{ booking
     return <Card>Booking was not found.</Card>;
   }
 
+  const requestHeaders = await headers();
+  const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host");
+  const isLocalAddress = host
+    ? /^(localhost|127\.|0\.0\.0\.0|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|\[::1\])/.test(host)
+    : false;
+  const protocol = requestHeaders.get("x-forwarded-proto") ??
+    (isLocalAddress ? "http" : "https");
+  const qrPayload = details.qrPayload && host
+    ? buildQrPayload(parseQrPayload(details.qrPayload), `${protocol}://${host}`)
+    : details.qrPayload;
+
   return (
     <div className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[0.9fr_1.1fr]">
       <Card className="text-center">
         <p className="text-sm font-semibold uppercase tracking-wide text-mint">
-          {details.qrPayload ? "QR parking ticket" : "Payment confirmation"}
+          {qrPayload ? "QR parking ticket" : "Payment confirmation"}
         </p>
         <h1 className="mt-2 text-2xl font-bold text-ink">{details.booking.bookingReference}</h1>
-        {details.qrPayload ? (
+        {qrPayload ? (
           <>
             <div className="mx-auto mt-6 inline-flex rounded-lg border border-ink/10 bg-white p-4">
-              <QRCodeSVG value={details.qrPayload} size={240} />
+              <QRCodeSVG value={qrPayload} size={240} />
             </div>
             <p className="mt-4 text-sm text-asphalt/75">
-              The QR contains only a secure random ticket token. No payment or personal data is embedded.
+              Scan with the Warden app or a phone camera. The link contains only a secure random ticket token; no
+              payment or personal data is embedded.
             </p>
           </>
         ) : (
@@ -79,7 +92,7 @@ export default async function TicketPage({ params }: { params: Promise<{ booking
           </div>
         </dl>
         <div className="mt-6 flex flex-wrap gap-3">
-          {details.qrPayload ? (
+          {qrPayload ? (
             <Link
               href="/driver/active"
               className="inline-flex h-11 items-center justify-center rounded-md bg-mint px-4 text-sm font-semibold text-white hover:bg-emerald-700"

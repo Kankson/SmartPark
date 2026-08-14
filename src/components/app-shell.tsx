@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { LogOut, ParkingCircle } from "lucide-react";
 
+import { AppNavigation } from "@/components/app-navigation";
+import { RoleTutorial } from "@/components/role-tutorial";
 import { Button } from "@/components/ui/button";
 import { type DemoUser } from "@/server/domain";
 
@@ -27,18 +29,7 @@ export function AppShell({
               <span className="block text-[11px] font-semibold uppercase text-asphalt/55">city centre</span>
             </span>
           </Link>
-          <nav className="hidden items-center gap-1 md:flex" aria-label="Primary">
-            {nav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-md px-3 py-2 text-sm font-semibold text-asphalt transition hover:bg-kerb hover:text-ink"
-                data-lift
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          <AppNavigation nav={nav} />
           <div className="flex items-center gap-3">
             <div className="hidden text-right text-sm sm:block">
               <p className="font-semibold text-ink">{user.fullName}</p>
@@ -47,6 +38,7 @@ export function AppShell({
             <span className="hidden rounded-md border border-mint/20 bg-mint/10 px-2.5 py-1 text-xs font-bold uppercase text-mint sm:inline-flex">
               live
             </span>
+            <RoleTutorial role={user.role} />
             <form action="/api/logout" method="post">
               <Button variant="secondary" className="h-10 px-3" title="Log out" aria-label="Log out">
                 <LogOut size={16} aria-hidden="true" />
@@ -54,21 +46,11 @@ export function AppShell({
             </form>
           </div>
         </div>
-        <nav className="flex gap-1 overflow-x-auto border-t border-ink/10 px-4 py-2 md:hidden" aria-label="Mobile">
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="whitespace-nowrap rounded-md px-3 py-2 text-sm font-semibold text-asphalt hover:bg-kerb"
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
       </header>
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8" data-motion="page">
+      <main className="mx-auto max-w-7xl px-4 py-6 pb-24 sm:px-6 md:pb-6 lg:px-8" data-motion="page">
         {children}
       </main>
+      <AppNavigation nav={nav} mobile />
     </div>
   );
 }

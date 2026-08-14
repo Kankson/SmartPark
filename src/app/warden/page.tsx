@@ -12,6 +12,7 @@ import {
   TimerReset
 } from "lucide-react";
 
+import { AutoRefresh } from "@/components/auto-refresh";
 import { MetricCard } from "@/components/metric-card";
 import { StatusPill } from "@/components/status-pill";
 import { Card } from "@/components/ui/card";
@@ -33,6 +34,7 @@ export default function WardenDashboardPage() {
           <h1 className="mt-1 text-3xl font-bold text-ink">Parking dashboard</h1>
         </div>
         <div className="flex flex-wrap gap-2">
+          <AutoRefresh />
           <Link
             href="/warden/scanner"
             className="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-mint px-4 text-sm font-semibold text-white hover:bg-emerald-700"

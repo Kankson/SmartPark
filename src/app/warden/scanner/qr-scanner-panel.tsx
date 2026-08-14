@@ -17,8 +17,8 @@ type Result = {
   zone?: { name: string };
 };
 
-export function QrScannerPanel() {
-  const [payload, setPayload] = useState("");
+export function QrScannerPanel({ initialPayload = "" }: { initialPayload?: string }) {
+  const [payload, setPayload] = useState(initialPayload);
   const [mode, setMode] = useState<"entry" | "verify" | "exit">("entry");
   const [error, setError] = useState("");
   const [result, setResult] = useState<Result | null>(null);
@@ -82,7 +82,7 @@ export function QrScannerPanel() {
               className="min-h-28 w-full rounded-md border border-ink/15 bg-white p-3 text-sm outline-none focus:border-signal focus:ring-2 focus:ring-signal/20"
               value={payload}
               onChange={(event) => setPayload(event.target.value)}
-              placeholder='{"type":"smartpark-ticket","token":"..."}'
+              placeholder="Scan a ticket or paste its verification link"
             />
           </Field>
           {error ? <FormError>{error}</FormError> : null}

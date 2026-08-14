@@ -12,3 +12,6 @@ test-results
 .corepack
 *.tsbuildinfo
 *.log
+
+# Microsoft Office temporary lock files
+~$*

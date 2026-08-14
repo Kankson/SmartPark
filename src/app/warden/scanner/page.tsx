@@ -1,5 +1,6 @@
 import { QrScannerPanel } from "@/app/warden/scanner/qr-scanner-panel";
 
-export default function ScannerPage() {
-  return <QrScannerPanel />;
+export default async function ScannerPage({ searchParams }: { searchParams: Promise<{ ticket?: string }> }) {
+  const { ticket } = await searchParams;
+  return <QrScannerPanel initialPayload={ticket ?? ""} />;
 }

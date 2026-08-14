@@ -6,7 +6,8 @@ import {
   assertBookingTransition,
   calculateParkingPrice,
   getViolationPriority,
-  normalizePlateNumber
+  normalizePlateNumber,
+  parseQrPayload
 } from "@/server/domain";
 import {
   createBooking,
@@ -48,6 +49,12 @@ describe("SmartPark domain rules", () => {
     expect(() => assertBookingTransition("reserved", "completed")).toThrow(/Invalid booking transition/);
   });
 
+  it("reads current ticket links and legacy QR payloads", () => {
+    const token = "ticket-token-long-enough";
+    expect(parseQrPayload(`https://smartpark.example/warden/scanner?ticket=${token}`)).toBe(token);
+    expect(parseQrPayload(JSON.stringify({ type: "smartpark-ticket", token }))).toBe(token);
+  });
+
   it("ranks violation urgency from live overstay time", () => {
     expect(getViolationPriority(4)).toBe("watch");
     expect(getViolationPriority(15)).toBe("high");
@@ -77,7 +84,7 @@ describe("SmartPark domain rules", () => {
 
     expect(result.booking.status).toBe("reserved");
     expect(result.payment.status).toBe("successful");
-    expect(result.qrPayload).toContain("smartpark-ticket");
+    expect(result.qrPayload).toContain("/warden/scanner?ticket=");
   });
 
   it("reserves an AZA booking only after a signed completion webhook", async () => {
@@ -144,7 +151,7 @@ describe("SmartPark domain rules", () => {
     }
     expect(completed.booking.status).toBe("reserved");
     expect(completed.payment.status).toBe("successful");
-    expect(completed.qrPayload).toContain("smartpark-ticket");
+    expect(completed.qrPayload).toContain("/warden/scanner?ticket=");
   });
 
   it("validates QR entry and exit safely", async () => {

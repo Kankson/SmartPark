@@ -39,6 +39,10 @@ import { getStore } from "@/server/store";
 
 const HOLD_MINUTES = 10;
 
+function ticketQrPayload(token: string) {
+  return buildQrPayload(token, process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000");
+}
+
 export interface BookingInput {
   driverId: string;
   vehicleId: string;
@@ -328,7 +332,7 @@ export async function completeMockPayment(bookingId: string, successful: boolean
 
   if (payment.status !== "pending") {
     const token = state.demoQrTokens[booking.id];
-    return { booking, payment, qrPayload: token ? buildQrPayload(token) : "" };
+    return { booking, payment, qrPayload: token ? ticketQrPayload(token) : "" };
   }
 
   const verification = await new MockPaymentProvider().verifyPayment(
@@ -436,7 +440,7 @@ function finalizeBookingPayment(input: {
 
   if (payment.status !== "pending") {
     const token = state.demoQrTokens[booking.id];
-    return { booking, payment, qrPayload: token ? buildQrPayload(token) : "" };
+    return { booking, payment, qrPayload: token ? ticketQrPayload(token) : "" };
   }
 
   payment.status = input.successful ? "successful" : "failed";
@@ -480,7 +484,7 @@ function finalizeBookingPayment(input: {
   const existingTicket = state.qrTickets.find((ticket) => ticket.bookingId === booking.id);
   const existingToken = state.demoQrTokens[booking.id];
   if (existingTicket && existingToken) {
-    return { booking, payment, qrPayload: buildQrPayload(existingToken) };
+    return { booking, payment, qrPayload: ticketQrPayload(existingToken) };
   }
 
   const token = createQrToken();
@@ -497,7 +501,7 @@ function finalizeBookingPayment(input: {
   state.demoQrTokens[booking.id] = token;
   audit("payment_confirmed_issue_qr", "booking", booking.id, { paymentId: payment.id, ticketId: ticket.id });
 
-  return { booking, payment, qrPayload: buildQrPayload(token) };
+  return { booking, payment, qrPayload: ticketQrPayload(token) };
 }
 
 function finalizeExtensionPaymentFromWebhook(
@@ -640,7 +644,7 @@ export function getBookingDetails(bookingId: string) {
     zone: getZone(booking.zoneId),
     payment,
     ticket: state.qrTickets.find((ticket) => ticket.bookingId === booking.id),
-    qrPayload: token ? buildQrPayload(token) : undefined,
+    qrPayload: token ? ticketQrPayload(token) : undefined,
     checkoutUrl
   };
 }
