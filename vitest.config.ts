@@ -7,6 +7,8 @@ export default defineConfig({
   test: {
     environment: "node",
     globals: true,
+    // Exercise the real SQLite layer without leaving a file behind.
+    env: { SMARTPARK_DB_PATH: ":memory:" },
     include: ["src/**/*.test.ts", "src/**/*.test.tsx"]
   },
   resolve: {
