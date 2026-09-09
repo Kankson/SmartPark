@@ -34,7 +34,7 @@ export function MobilityCommandPreview() {
                 City Centre Live
               </div>
               <div className="absolute right-5 top-5 rounded-md bg-white px-3 py-2 text-xs font-bold text-ink">
-                42 free bays
+                Live availability
               </div>
 
               <div className="relative mt-20 grid grid-cols-2 gap-x-20 gap-y-4">
