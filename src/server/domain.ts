@@ -29,7 +29,8 @@ export type VehicleType = "car" | "motorcycle" | "van" | "accessible";
 export interface DemoUser {
   id: string;
   email: string;
-  password: string;
+  /** scrypt digest produced by `hashPassword`; never a plaintext password. */
+  passwordHash: string;
   fullName: string;
   phone: string;
   role: UserRole;

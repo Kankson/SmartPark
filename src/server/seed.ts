@@ -9,15 +9,23 @@ import {
   normalizePlateNumber,
   nowIso
 } from "@/server/domain";
+import { hashPassword } from "@/server/password";
 import { hashQrToken } from "@/server/qr";
 
 const createdAt = "2026-06-16T12:00:00.000Z";
+
+/** Shared password for every seeded demo account; see README. */
+export const DEMO_PASSWORD = "password123";
+
+// One digest for all six fixtures: they share a password, so they may as well
+// share the derivation rather than pay for scrypt six times at import.
+const demoPasswordHash = hashPassword(DEMO_PASSWORD);
 
 export const demoUsers: DemoUser[] = [
   {
     id: "user_driver_ama",
     email: "driver@smartpark.test",
-    password: "password123",
+    passwordHash: demoPasswordHash,
     fullName: "Ama Mensah",
     phone: "+233 20 000 1001",
     role: "driver",
@@ -26,7 +34,7 @@ export const demoUsers: DemoUser[] = [
   {
     id: "user_driver_kofi",
     email: "kofi@smartpark.test",
-    password: "password123",
+    passwordHash: demoPasswordHash,
     fullName: "Kofi Boateng",
     phone: "+233 20 000 1002",
     role: "driver",
@@ -35,7 +43,7 @@ export const demoUsers: DemoUser[] = [
   {
     id: "user_driver_efua",
     email: "efua@smartpark.test",
-    password: "password123",
+    passwordHash: demoPasswordHash,
     fullName: "Efua Darko",
     phone: "+233 20 000 1003",
     role: "driver",
@@ -44,7 +52,7 @@ export const demoUsers: DemoUser[] = [
   {
     id: "user_warden_one",
     email: "warden@smartpark.test",
-    password: "password123",
+    passwordHash: demoPasswordHash,
     fullName: "Kojo Warden",
     phone: "+233 20 000 2001",
     role: "warden",
@@ -53,7 +61,7 @@ export const demoUsers: DemoUser[] = [
   {
     id: "user_warden_two",
     email: "nana.warden@smartpark.test",
-    password: "password123",
+    passwordHash: demoPasswordHash,
     fullName: "Nana Warden",
     phone: "+233 20 000 2002",
     role: "warden",
@@ -62,7 +70,7 @@ export const demoUsers: DemoUser[] = [
   {
     id: "user_admin_one",
     email: "admin@smartpark.test",
-    password: "password123",
+    passwordHash: demoPasswordHash,
     fullName: "SmartPark Admin",
     phone: "+233 20 000 3001",
     role: "admin",

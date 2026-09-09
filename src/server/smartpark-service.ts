@@ -34,6 +34,7 @@ import {
   createPaymentProvider,
   type VerifiedWebhookEvent
 } from "@/server/payment-provider";
+import { hashPassword } from "@/server/password";
 import { createQrToken, createZoneQrPayload, hashQrToken, verifyZoneQrPayload } from "@/server/qr";
 import { getStore } from "@/server/store";
 
@@ -99,7 +100,7 @@ export function registerDriver(input: {
     id: createId("user"),
     fullName: input.fullName,
     email: input.email,
-    password: input.password,
+    passwordHash: hashPassword(input.password),
     phone: input.phone,
     role: "driver",
     isActive: true
