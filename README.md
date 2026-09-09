@@ -48,6 +48,9 @@ corepack pnpm install
 corepack pnpm dev
 ```
 
+`pnpm dev` automatically creates `.env.local` from the safe committed template when the file is missing. To inspect
+configuration without printing secrets, run `corepack pnpm env:check`.
+
 If PowerShell blocks package-manager shims, use:
 
 ```powershell
@@ -68,7 +71,9 @@ Public users can register only as drivers. Warden/admin accounts are seeded or a
 
 ## Environment Variables
 
-Copy `.env.example` to `.env.local` and fill real values when moving beyond demo mode.
+The app creates `.env.local` automatically and starts in mock-payment mode. Open it with `notepad .env.local` from
+PowerShell and fill real values only when moving beyond demo mode. See `docs/environment-setup.md` for local and Vercel
+steps.
 
 Server secrets:
 
@@ -91,6 +96,8 @@ AZA_WEBHOOK_SECRET=...
 
 Register `https://your-domain/api/payments/aza-webhook` in the AZA merchant dashboard. See
 `docs/payment-integration.md` for the full setup and webhook event list.
+
+Admin users can open **Admin > Settings** to see redacted readiness, copy the webhook URL, and test the AZA API key.
 
 Never expose service-role keys, payment secrets, webhook secrets, or QR pepper values in client code.
 
@@ -283,6 +290,9 @@ corepack pnpm test
 corepack pnpm test:e2e
 corepack pnpm build
 corepack pnpm db:reset
+corepack pnpm seed
+corepack pnpm env:setup
+corepack pnpm env:check
 ```
 
 ## Security Assumptions
@@ -340,4 +350,3 @@ http://127.0.0.1:3000
 6. To stop the app, return to PowerShell and press:
 Ctrl + C
 If it says port 3000 is already in use, SmartPark is probably already running. Open the address directly instead of starting another copy.
-
