@@ -15,3 +15,6 @@ test-results
 
 # Microsoft Office temporary lock files
 ~$*
+
+# Local SQLite database
+.data

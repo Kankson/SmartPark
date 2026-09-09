@@ -34,8 +34,9 @@ import {
   createPaymentProvider,
   type VerifiedWebhookEvent
 } from "@/server/payment-provider";
+import { hashPassword } from "@/server/password";
 import { createQrToken, createZoneQrPayload, hashQrToken, verifyZoneQrPayload } from "@/server/qr";
-import { getStore } from "@/server/store";
+import { getStore, markDirty } from "@/server/store";
 
 const HOLD_MINUTES = 10;
 
@@ -99,7 +100,7 @@ export function registerDriver(input: {
     id: createId("user"),
     fullName: input.fullName,
     email: input.email,
-    password: input.password,
+    passwordHash: hashPassword(input.password),
     phone: input.phone,
     role: "driver",
     isActive: true
@@ -622,6 +623,7 @@ function releaseHeldSpot(spot: ParkingSpot) {
   spot.heldByUserId = undefined;
   spot.holdExpiresAt = undefined;
   spot.updatedAt = nowIso();
+  markDirty();
 }
 
 export function getBookingDetails(bookingId: string) {
@@ -1104,6 +1106,7 @@ function releaseExpiredHolds() {
     spot.heldByUserId = undefined;
     spot.holdExpiresAt = undefined;
     spot.updatedAt = nowIso();
+    markDirty();
 
     const booking = state.bookings.find(
       (item) => item.spotId === spot.id && item.status === "pending_payment",
@@ -1181,6 +1184,7 @@ function recordVerification(input: Omit<VerificationEvent, "id" | "createdAt">) 
     ...input
   };
   getStore().verificationEvents.push(event);
+  markDirty();
   return event;
 }
 
@@ -1194,6 +1198,7 @@ function audit(action: string, entityType: string, entityId: string, metadata: R
     createdAt: nowIso()
   };
   getStore().auditLogs.push(log);
+  markDirty();
   return log;
 }
 

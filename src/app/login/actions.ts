@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { homeForRole, setDemoSession } from "@/lib/auth";
+import { verifyPassword } from "@/server/password";
 import { getUserByEmail } from "@/server/smartpark-service";
 
 const loginSchema = z.object({
@@ -19,7 +20,7 @@ export async function loginAction(_previousState: { error?: string }, formData: 
   }
 
   const user = getUserByEmail(parsed.data.email);
-  if (!user || user.password !== parsed.data.password || !user.isActive) {
+  if (!user || !user.isActive || !verifyPassword(parsed.data.password, user.passwordHash)) {
     return { error: "Invalid email or password." };
   }
 

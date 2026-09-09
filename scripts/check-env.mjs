@@ -14,7 +14,6 @@ try {
 
 const values = { ...localValues, ...process.env };
 const provider = (values.PAYMENT_PROVIDER || "mock").trim().toLowerCase();
-const appUrl = (values.NEXT_PUBLIC_APP_URL || "http://localhost:3000").replace(/\/$/, "");
 const apiKey = values.AZA_API_KEY?.trim() || "";
 const webhookSecret = values.AZA_WEBHOOK_SECRET?.trim() || "";
 const apiKeyReady = isConfigured(apiKey);
@@ -29,10 +28,10 @@ const apiKeyMode = !apiKeyReady
 
 console.log("SmartPark environment status");
 console.log(`- Local file: ${localFilePresent ? localPath : "missing; run pnpm env:setup"}`);
-console.log(`- Payment provider: ${provider}`);
+console.log("- Payment provider: configured");
 console.log(`- AZA API key: ${apiKeyMode}`);
 console.log(`- AZA signing secret: ${webhookReady ? "configured" : "missing or placeholder"}`);
-console.log(`- Webhook URL: ${appUrl}/api/payments/aza-webhook`);
+console.log("- Webhook URL path: /api/payments/aza-webhook");
 
 if (provider === "aza" && (!apiKeyReady || !webhookReady)) {
   console.error("AZA is selected but its server secrets are incomplete.");
